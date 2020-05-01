@@ -1,0 +1,41 @@
+<div class="container h-100">
+  <div class="row justify-content-md-center align-items-center h-75">
+    <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+      <div class="card card-signin my-5">
+        <div class="card-body">
+          <h5 class="card-title text-center">Sign In</h5>
+          <form (ngSubmit)="onSubmit()">
+            <div class="form-group">
+              <label for="exampleInputEmail1">Github access token:</label>
+              <input
+                type="text"
+                name="token"
+                [(ngModel)]="formToken"
+                class="form-control"
+                id="exampleInputEmail1"
+                aria-describedby="emailHelp"
+                placeholder="cd03185c3fd639917e9c1c688184e98790243309"
+              />
+              <!-- <a href="https://github.com/settings/tokens" target="_blank"
+                >Create Token</a
+              > -->
+            </div>
+            <button
+              type="submit"
+              class="btn btn-lg btn-primary btn-block text-uppercase"
+            >
+              <span
+                *ngIf="loading"
+                class="spinner-border"
+                style="width: 1.25rem; height: 1.25rem;"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              {{ loading ? "" : "Submit" }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
