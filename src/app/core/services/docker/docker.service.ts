@@ -1,33 +1,169 @@
-import { Injectable } from "@angular/core";
-import { ElectronService } from "../electron/electron.service";
-import * as moment from "moment";
+import { Injectable } from '@angular/core';
+import { ElectronService } from '../electron/electron.service';
+import { DockerArgs } from '../../../interface/dockerArgs';
+import * as moment from 'moment';
+import { Subject } from 'rxjs';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class DockerService {
+  imageStatus = {
+    sync: new Subject<string>(),
+    scraper: new Subject<string>(),
+    queue: new Subject<string>(),
+  };
+
+  buildingImages = new Subject<boolean>();
   constructor(private electronService: ElectronService) {}
 
-  buildSyncContainer(syncBranch: string) {
-    const date = moment().format("YYYY.M.DD");
-    const tag = `sync-${syncBranch}:${date}`;
-    const url = `https://github.com/getfyre/fyre-sync.git#${syncBranch}`;
-    const options = ["build", url, "--tag", tag];
-    const dockerProcess = this.electronService.childProcess.spawn(
-      "docker",
-      options
-    );
+  readonly spawnOptions = {
+    encoding: 'utf8',
+  };
 
-    dockerProcess.stdout.on("data", (data) => {
-      console.log(`stdout: ${data}`);
-    });
+  public async createContainers(repos: object) {
+    this.buildingImages.next(true);
+    // stop all sync containers that are running
+    await this.stopRunningContainers();
+    // remove all sync containers
+    await this.removeContainers();
+    // remove all sync images
+    await this.removeImages();
+    // build sync images
+    await this.buildImages(repos);
 
-    dockerProcess.stderr.on("data", (data) => {
-      console.error(`stderr: ${data}`);
-    });
+    this.buildingImages.next(false);
 
-    dockerProcess.on("close", (code) => {
-      console.log(`child process exited with code ${code}`);
+    // run sync images
+  }
+
+  private async stopRunningContainers() {
+    return new Promise((resolve, reject) => {
+      console.log('-----------Stopping Running Containers Start --------------');
+
+      const dockerProcess = this.electronService.childProcess.spawn('Powershell.exe', [
+        'docker container stop $(docker container ls --all --format "{{.Names}}" -f "name=sync" --filter "status=running")',
+      ]);
+
+      dockerProcess.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+        console.log('-----------Stopping Running Containers Done --------------');
+        resolve();
+      });
+
+      dockerProcess.stderr.on('data', (data) => {
+        console.warn(`stderr: ${data}`);
+        console.log('-----------Stopping Running Containers Done --------------');
+        resolve();
+      });
     });
+  }
+
+  private async removeContainers() {
+    return new Promise((resolve, reject) => {
+      console.log('-----------Remove Containers  --------------');
+
+      const dockerProcess = this.electronService.childProcess.spawn('Powershell.exe', [
+        'docker container rm $(docker container ls -a --format "{{.Names}}" -f "name=sync")',
+      ]);
+
+      dockerProcess.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+        console.log('-----------Remove Containers Done--------------');
+        resolve();
+      });
+
+      dockerProcess.stderr.on('data', (data) => {
+        console.warn(`stderr: ${data}`);
+        console.log('-----------Remove Containers Done--------------');
+        resolve();
+      });
+    });
+  }
+
+  private async removeImages() {
+    return new Promise((resolve, reject) => {
+      console.log('-----------Remove Images--------------');
+      const dockerProcess = this.electronService.childProcess.spawn('Powershell.exe', ['docker image rm -f $(docker images -aq -f "reference=sync*")']);
+
+      dockerProcess.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+        console.log('-----------Remove Images Done--------------');
+        resolve();
+      });
+
+      dockerProcess.stderr.on('data', (data) => {
+        console.warn(`stderr: ${data}`);
+        console.log('-----------Remove Images Done--------------');
+        resolve();
+      });
+    });
+  }
+
+  private async buildImages(repos) {
+    return new Promise(async (resolve, reject) => {
+      const elements = Object.keys(repos);
+      for (const element of elements) {
+        await this.buildSyncImage(repos[element]);
+      }
+      resolve();
+    });
+  }
+
+  buildSyncImage(branchMeta: object) {
+    return new Promise((resolve, reject) => {
+      const repoName = this.getRepoName(branchMeta['commit'].url).split('-');
+      console.log(`--------------Building ${repoName} Image ------------`);
+
+      const dockerOptions = this.getBuildArgs(branchMeta);
+      const dockerProcess = this.electronService.childProcess.spawn('docker', dockerOptions);
+
+      dockerProcess.stdout.on('data', (data) => {
+        const status = `stdout: ${data}`;
+        this.imageStatus[repoName[repoName.length - 1]].next(status);
+        console.log(status);
+        console.log(`--------------Building ${repoName} Image Done------------`);
+        resolve();
+      });
+
+      dockerProcess.stderr.on('data', (data) => {
+        console.warn(`stderr: ${data}`);
+        const status = `stderr: ${data}`;
+        this.imageStatus[repoName[repoName.length - 1]].next(status);
+        console.log(status);
+        console.log(`--------------Building ${repoName} Image Done------------`);
+        resolve();
+      });
+    });
+  }
+
+  private getBuildArgs(branch: object) {
+    const date = moment().format('YYYY.M.DD');
+    const repo = this.getRepoName(branch['commit'].url);
+    const tag = `sync-${repo}:${date}`;
+    const url = `https://github.com/getfyre/${repo}.git#${branch['name']}`;
+    return ['build', url, '--tag', tag];
+  }
+
+  private getRepoName(url: string): string {
+    return /getfyre\/(.*?)\//.exec(url)[1];
+  }
+
+  private runContainers(args: DockerArgs) {
+    const dockerOptions = this.getRunArgs(args);
+    const dockerProcess = this.electronService.childProcess.spawnSync('docker run --name sync-test sync-test:1', dockerOptions, {
+      encoding: 'utf8',
+    });
+  }
+
+  private getRunArgs(dockerArgs: DockerArgs): Array<string> {
+    const args = [];
+    dockerArgs.env.forEach((value) => {
+      args.push('-e', value);
+    });
+    dockerArgs.port.forEach((port) => {
+      args.push('-p', port);
+    });
+    return args;
   }
 }
