@@ -66,7 +66,7 @@ export class DetailComponent implements OnInit {
 
     if (!this.objectIsEmpty(f.value)) {
       this.buildingImages = true;
-      await this.dockerService.createContainers(f.value);
+      await this.dockerService.saveBranchesToFile(f.value);
       this.buildingImages = false;
     }
   }

@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"fyresync.atsfields"}],"uuid":"a8d83c2e98dd4a80ad307992ad6714ee"}

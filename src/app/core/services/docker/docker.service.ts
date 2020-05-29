@@ -37,6 +37,38 @@ export class DockerService {
     // run sync images
   }
 
+  public async saveBranchesToFile(repos) {
+    //create string for environment variables
+
+    const githubToken = `GITHUB_TOKEN=${localStorage.getItem('githubToken')}`;
+    const syncBranch = `SYNC_BRANCH=${repos['sync'].name}`;
+    const queueBranch = `QUEUE_BRANCH=${repos['queue'].name}`;
+    const scraperBranch = `SCRAPER_BRANCH=${repos['scraper'].name}`;
+
+    const fileData = githubToken + '\r\n' + syncBranch + '\r\n' + queueBranch + '\r\n' + scraperBranch;
+    const fsPromise = this.electronService.fs.promises;
+    //save to file
+    try {
+      await fsPromise.writeFile('environments\\.env', fileData);
+      console.log('file is written');
+    } catch (err) {
+      console.log(err);
+      alert(err);
+    }
+    //run docker-compose up
+    const dockerProcess = this.electronService.childProcess.spawn('Powershell.exe', ['docker-compose up']);
+    console.log('yoo');
+
+    dockerProcess.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+
+    dockerProcess.stderr.on('data', (data) => {
+      console.warn(`stderr: ${data}`);
+    });
+    // add function to run docker-compose-down
+  }
+
   private async stopRunningContainers() {
     return new Promise((resolve, reject) => {
       console.log('-----------Stopping Running Containers Start --------------');
