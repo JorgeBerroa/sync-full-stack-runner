@@ -1,1 +1,3 @@
-{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"fyresync.mailparseoptions"}],"uuid":"8cfe0e381c264b2b873f1b285bed27b2"}
+version https://git-lfs.github.com/spec/v1
+oid sha256:5d8b75e3afc632d0479bc169d2a1c5fdc0c5afb30a5ba95927219effe7f90ca4
+size 173

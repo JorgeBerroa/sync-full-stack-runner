@@ -1,1 +1,3 @@
-{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"fyresync.works"}],"uuid":"40f1910dc8ea4adfbbc30f958e48a4d9"}
+version https://git-lfs.github.com/spec/v1
+oid sha256:ee5fb944a9a03a2d72d41fd1f1003a44a03492a0feaf2d8aa7fb8b38a9c50b15
+size 162

@@ -1,1 +1,3 @@
-{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"fyresync.users"},{"v":{"$numberInt":"2"},"unique":true,"key":{"email":{"$numberInt":"1"}},"name":"email_1","ns":"fyresync.users","background":true}],"uuid":"b1c128bc80314bc192536d04d6da32b6"}
+version https://git-lfs.github.com/spec/v1
+oid sha256:d079d0379e3d3b3af267dbaa9fe89ae6abda4e0d795ccce6b7a1fa9d8b43930d
+size 293

@@ -1,1 +1,3 @@
-{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"fyresync.phonecalls"}],"uuid":"f348a8ca6e0f4bf1b81ea36ed3eaec25"}
+version https://git-lfs.github.com/spec/v1
+oid sha256:4294cdcbcc7015f59a7f824167eefe35f18eef91f2b3a72d8a3f6bd843693369
+size 167

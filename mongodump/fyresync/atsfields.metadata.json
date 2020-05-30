@@ -1,1 +1,3 @@
-{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"fyresync.atsfields"}],"uuid":"a8d83c2e98dd4a80ad307992ad6714ee"}
+version https://git-lfs.github.com/spec/v1
+oid sha256:16b617438b5aa947528c124074c1e08d4b7634c5de37d3d8f3a59ca282635f75
+size 166
