@@ -13,8 +13,6 @@ services:
   sync-api:
     container_name: sync-api
     build: https://${GITHUB_TOKEN}:@github.com/getfyre/fyre-sync.git#${SYNC_BRANCH}
-    # env_file:
-    #   # - ./environments/.env
     depends_on:
       - sync-mongo
     environment:
@@ -44,8 +42,6 @@ services:
 
   sync-queue:
     container_name: sync-queue
-    # env_file:
-    #   # - ./environments/.env
     build: https://${GITHUB_TOKEN}:@github.com/getfyre/fyre-queue.git#${QUEUE_BRANCH}
     depends_on:
       - mongodb-sync-queue
@@ -63,8 +59,6 @@ services:
 
   sync-scraper:
     container_name: sync-scraper
-    # env_file:
-    #   # - ./environments/.env
     build: https://${GITHUB_TOKEN}:@github.com/getfyre/fyre-sync-scraper.git#${SCRAPER_BRANCH}
     depends_on:
       - sync-queue
