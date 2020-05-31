@@ -71,6 +71,10 @@ export class DetailComponent implements OnInit {
     }
   }
 
+  private stopApplications() {
+    this.dockerService.stopAllApplications();
+  }
+
   private objectIsEmpty(obj) {
     let empty = false;
     Object.keys(obj).forEach((val) => {

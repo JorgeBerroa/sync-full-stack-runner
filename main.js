@@ -16,12 +16,14 @@ function createWindow() {
         height: size.height,
         webPreferences: {
             nodeIntegration: true,
-            allowRunningInsecureContent: (serve) ? true : false,
+            allowRunningInsecureContent: serve ? true : false,
         },
     });
     if (serve) {
         require('electron-reload')(__dirname, {
-            electron: require(__dirname + "/node_modules/electron")
+            electron: require(__dirname + "/node_modules/electron"),
+            ignored: /node_modules|[\/\\]\.|.env/,
+            argv: [],
         });
         win.loadURL('http://localhost:4200');
     }
@@ -29,7 +31,7 @@ function createWindow() {
         win.loadURL(url.format({
             pathname: path.join(__dirname, 'dist/index.html'),
             protocol: 'file:',
-            slashes: true
+            slashes: true,
         }));
     }
     if (serve) {

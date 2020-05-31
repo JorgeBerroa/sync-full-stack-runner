@@ -43,6 +43,9 @@
     <button *ngIf="!buildingImages" class="btn btn-primary ml-3" type="submit">
       Build Sync Branches
     </button>
+    <button type="button" class="btn btn-danger ml-3" (click)="stopApplications()">
+      Stop Applications
+    </button>
     <button *ngIf="buildingImages" class="btn btn-primary ml-3" type="button" disabled>
       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
       Building Images...

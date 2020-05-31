@@ -74,6 +74,18 @@ export class DockerService {
     // add function to run docker-compose-down
   }
 
+  public stopAllApplications(){
+    const dockerProcess = this.electronService.childProcess.spawn('Powershell.exe', ['docker-compose down']);
+
+    dockerProcess.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+
+    dockerProcess.stderr.on('data', (data) => {
+      console.warn(`stderr: ${data}`);
+    });
+  }
+
   private async stopRunningContainers() {
     return new Promise((resolve, reject) => {
       console.log('-----------Stopping Running Containers Start --------------');
