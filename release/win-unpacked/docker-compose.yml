@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  sync-mongo:
+    image: mongo:4.2
+    container_name: sync-mongo
+    volumes:
+      - ./mongodump/fyresync:/usr/src/app/fyresync
+      - ./scripts/mongoSeed.sh:/docker-entrypoint-initdb.d/mongoseed.sh
+    ports:
+      - '27017:27017'
+
+  sync-api:
+    container_name: sync-api
+    build: https://${GITHUB_TOKEN}:@github.com/getfyre/fyre-sync.git#${SYNC_BRANCH}
+    # env_file:
+    #   # - ./environments/.env
+    depends_on:
+      - sync-mongo
+    environment:
+      - gryd_environment=local
+      - gryd_port=9000
+      - gryd_host=sync-api
+      - MONGO_URI=mongodb://host.docker.internal:27017/fyresync
+      - QUEUE_API_URL=http://host.docker.internal:3001/sync
+    ports:
+      - '9000:9000'
+    command: sh -c "
+      sleep 30s && node index.js"
+
+  mongodb-sync-queue:
+    container_name: syncqueue
+    image: mongo:4.2
+    ports:
+      - 27018:27018
+    command: ['--bind_ip_all', '--replSet', 'rs0', '--port', '27018', '--oplogSize', '128']
+
+  mongo-setup:
+    container_name: mongo-setup
+    image: mongo:4.2
+    volumes:
+      - ./scripts/replica.sh:/scripts/replica.sh
+    entrypoint: ['/scripts/replica.sh']
+
+  sync-queue:
+    container_name: sync-queue
+    # env_file:
+    #   # - ./environments/.env
+    build: https://${GITHUB_TOKEN}:@github.com/getfyre/fyre-queue.git#${QUEUE_BRANCH}
+    depends_on:
+      - mongodb-sync-queue
+    environment:
+      - PORT=3001
+      - FYRE_ENV=local
+      - MONGO_URI=mongodb://mongodb-sync-queue:27018/fyrequeue?replicaSet=rs0
+      - SYNC_URL=http://host.docker.internal:9000/v1
+    expose:
+      - 27018
+    ports:
+      - '3001:3001'
+    command: sh -c "
+      sleep 12s && node index.js"
+
+  sync-scraper:
+    container_name: sync-scraper
+    # env_file:
+    #   # - ./environments/.env
+    build: https://${GITHUB_TOKEN}:@github.com/getfyre/fyre-sync-scraper.git#${SCRAPER_BRANCH}
+    depends_on:
+      - sync-queue
+    environment:
+      - gryd_environment=local
+      - MONGO_URI=mongodb://host.docker.internal:27017/fyresync
+      - SYNC_URL=http://host.docker.internal:9000/v1/scraper
+      - QUEUE_URL=http://host.docker.internal:3001/scraper
+      - MEDICAL_URL=http://host.docker.internal:9000/v1/medical
+    ports:
+      - '8002:8002'
+    command: sh -c "
+      sleep 20s && node index.js"

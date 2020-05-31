@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_","ns":"fyresync.submittalconfigs"}],"uuid":"6ca92b1fe0c64cdfa9997451dc046162"}
