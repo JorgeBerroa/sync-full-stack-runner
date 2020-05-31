@@ -47,9 +47,14 @@ export class DockerService {
 
     const fileData = githubToken + '\r\n' + syncBranch + '\r\n' + queueBranch + '\r\n' + scraperBranch;
     const fsPromise = this.electronService.fs.promises;
+
+    try {
+      await fsPromise.mkdir('./environments');
+      console.log('directory created');
+    } catch (error) {}
     //save to file
     try {
-      await fsPromise.writeFile('environments\\.env', fileData);
+      await fsPromise.writeFile('./.env', fileData);
       console.log('file is written');
     } catch (err) {
       console.log(err);
