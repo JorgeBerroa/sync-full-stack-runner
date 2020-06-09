@@ -6,7 +6,7 @@ extraFiles:
       - ./docker-compose.yml
       - ./mongodump
       - ./scripts
-productName: angular-electron
+productName: Sync Full Stack Runner
 files:
   - filter:
       - '**/*'
