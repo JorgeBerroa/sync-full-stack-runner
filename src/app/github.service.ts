@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, empty } from 'rxjs';
-import { catchError, map, expand, reduce } from 'rxjs/operators';
+import { catchError, map, expand, reduce, tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -29,9 +29,10 @@ export class GithubService {
       }),
     };
     return this.http.get('https://api.github.com/repos/getfyre/fyre-sync', httpOptions).pipe(
-      map(() => {
+      tap(() => {
         localStorage.setItem('githubToken', token);
         this.token = token;
+        this.updateOptions();
         return true;
       }),
       catchError(this.handleError)
@@ -107,5 +108,14 @@ export class GithubService {
     }
     // return an observable with a user-facing error message
     return throwError('Something bad happened; please try again later.');
+  }
+
+  private updateOptions() {
+    this.options = {
+      headers: new HttpHeaders({
+        Authorization: `token ${this.token}`,
+      }),
+      observe: 'response',
+    };
   }
 }

@@ -16,9 +16,8 @@ services:
     depends_on:
       - sync-mongo
     environment:
-      - gryd_environment=local
-      - gryd_port=9000
-      - gryd_host=sync-api
+      - FYRE_ENV=local
+      - gryd_port=9000      
       - MONGO_URI=mongodb://host.docker.internal:27017/fyresync
       - QUEUE_API_URL=http://host.docker.internal:3001/sync
     ports:
@@ -63,7 +62,7 @@ services:
     depends_on:
       - sync-queue
     environment:
-      - gryd_environment=local
+      - FYRE_ENV=local
       - MONGO_URI=mongodb://host.docker.internal:27017/fyresync
       - SYNC_URL=http://host.docker.internal:9000/v1/scraper
       - QUEUE_URL=http://host.docker.internal:3001/scraper

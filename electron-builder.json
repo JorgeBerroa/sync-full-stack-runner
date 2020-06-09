@@ -1,6 +1,6 @@
 {
-  "extraFiles": ["./docker-compose.yml", "./mongodump"],
-  "productName": "angular-electron",
+  "extraFiles": ["./docker-compose.yml", "./mongodump", "./scripts"],
+  "productName": "Sync Full Stack Runner",
   "directories": {
     "output": "release/"
   },

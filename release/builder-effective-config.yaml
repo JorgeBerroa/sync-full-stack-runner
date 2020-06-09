@@ -5,6 +5,7 @@ extraFiles:
   - filter:
       - ./docker-compose.yml
       - ./mongodump
+      - ./scripts
 productName: angular-electron
 files:
   - filter:
