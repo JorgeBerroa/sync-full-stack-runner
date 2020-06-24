@@ -17,7 +17,7 @@ services:
       - sync-mongo
     environment:
       - FYRE_ENV=local
-      - gryd_port=9000      
+      - gryd_port=9000
       - MONGO_URI=mongodb://host.docker.internal:27017/fyresync
       - QUEUE_API_URL=http://host.docker.internal:3001/sync
     ports:
@@ -71,3 +71,20 @@ services:
       - '8002:8002'
     command: sh -c "
       sleep 20s && node index.js"
+
+  sync-admin-tools:
+    container_name: sync-admin-tools
+    build:
+      context: https://${GITHUB_TOKEN}:@github.com/getfyre/fyre-admin-tools.git#${ADMIN_TOOLS_BRANCH}
+      dockerfile: Dockerfile-local
+    tty: true
+    ports:
+      - '3000:3000'
+
+  sync-submittals:
+    container_name: sync-submittals
+    build:
+      context: https://${GITHUB_TOKEN}:@github.com/getfyre/sync-submittals.git#${SUBMITTALS_BRANCH}
+      dockerfile: Dockerfile-local
+    ports:
+      - '4201:4201'

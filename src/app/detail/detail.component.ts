@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { GithubService } from '../github.service';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { Subject, merge, forkJoin, fromEvent, of } from 'rxjs';
+import { Subject, merge, forkJoin, fromEvent, of, BehaviorSubject } from 'rxjs';
 import { DockerService } from '../core/services/docker/docker.service';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { NgForm } from '@angular/forms';
@@ -14,33 +14,43 @@ import { ElectronService } from '../core/services';
 })
 export class DetailComponent implements OnInit {
   model: any;
-  syncStatus = [];
-  queueStatus = [];
-  scraperStatus = [];
+  dockerOutput = '';
   buildingImages = false;
-  focus$ = new Subject<string>();
-  click$ = new Subject<string>();
-  branches: { sync: object[]; queue: object[]; scraper: object[] };
+  branches: { sync: object[]; queue: object[]; scraper: object[]; adminTools: object[]; submittals: object[] };
+  testEmitter$ = new BehaviorSubject<string>(this.dockerOutput);
 
-  constructor(private githubService: GithubService, private dockerService: DockerService, private electronService: ElectronService) {}
+  constructor(
+    private githubService: GithubService,
+    private dockerService: DockerService,
+    private electronService: ElectronService,
+    private ref: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     forkJoin({
       sync: this.githubService.getSyncBranches(),
       queue: this.githubService.getQueueBranches(),
       scraper: this.githubService.getScraperBranches(),
+      adminTools: this.githubService.getAdminToolsBranches(),
+      submittals: this.githubService.getSubmittalsBranches(),
     }).subscribe((val) => {
       this.branches = val;
     });
 
-    this.dockerService.imageStatus.sync.subscribe((value) => this.syncStatus.push(value));
-    this.dockerService.imageStatus.queue.subscribe((value) => this.queueStatus.push(value));
-    this.dockerService.imageStatus.scraper.subscribe((value) => this.scraperStatus.push(value));
-    this.dockerService.buildingImages.subscribe((value) => (this.buildingImages = value));
+    this.dockerService.containerOutput.subscribe((value) => {
+      console.log('im here');
+
+      this.dockerOutput += value + '\r\n';
+      this.ref.detectChanges();
+    });
   }
 
   getStatus(imageStatus) {
     return imageStatus.join('\r\n');
+  }
+
+  private stopApplications() {
+    this.dockerService.stopAllApplications();
   }
 
   search = (instance: NgbTypeahead, element: HTMLInputElement, key) => (text$) => {
@@ -61,18 +71,21 @@ export class DetailComponent implements OnInit {
   formatter = (x: { name: string }) => x.name;
   // Preserve original property order
   originalOrder = () => {};
-  async onSubmit(f: NgForm) {
-    console.log(f.value);
+  async onSubmit(form: NgForm) {
+    console.log(form.value);
 
-    if (!this.objectIsEmpty(f.value)) {
+    if (!this.objectIsEmpty(form.value)) {
       this.buildingImages = true;
-      await this.dockerService.saveBranchesToFile(f.value);
-      this.buildingImages = false;
+      try {
+        await this.dockerService.saveBranchesToFile(form.value);
+        await this.dockerService.buildImages();
+        await this.dockerService.runDockerCompose();
+      } catch (err) {
+        alert(err);
+      } finally {
+        this.buildingImages = false;
+      }
     }
-  }
-
-  private stopApplications() {
-    this.dockerService.stopAllApplications();
   }
 
   private objectIsEmpty(obj) {
