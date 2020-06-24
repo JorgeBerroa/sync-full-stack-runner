@@ -53,8 +53,14 @@ export class GithubService {
     const url = 'https://api.github.com/repos/getfyre/fyre-sync-scraper/branches';
     return this.getBranches(url);
   }
+
   getAdminToolsBranches() {
     const url = 'https://api.github.com/repos/getfyre/fyre-admin-tools/branches';
+    return this.getBranches(url);
+  }
+
+  getSubmittalsBranches() {
+    const url = 'https://api.github.com/repos/getfyre/sync-submittals/branches';
     return this.getBranches(url);
   }
 

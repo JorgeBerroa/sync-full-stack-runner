@@ -14,7 +14,7 @@ export class DockerService {
     queue: new Subject<string>(),
   };
 
-  buildingImages = new Subject<boolean>();
+  containerOutput = new Subject<string>();
   constructor(private electronService: ElectronService) {}
 
   readonly spawnOptions = {
@@ -22,7 +22,7 @@ export class DockerService {
   };
 
   public async createContainers(repos: object) {
-    this.buildingImages.next(true);
+    // this.buildingImages.next(true);
     // stop all sync containers that are running
     await this.stopRunningContainers();
     // remove all sync containers
@@ -30,9 +30,9 @@ export class DockerService {
     // remove all sync images
     await this.removeImages();
     // build sync images
-    await this.buildImages(repos);
+    //await this.buildImages(repos);
 
-    this.buildingImages.next(false);
+    // this.buildingImages.next(false);
 
     // run sync images
   }
@@ -44,8 +44,10 @@ export class DockerService {
     const syncBranch = `SYNC_BRANCH=${repos['sync'].name}`;
     const queueBranch = `QUEUE_BRANCH=${repos['queue'].name}`;
     const scraperBranch = `SCRAPER_BRANCH=${repos['scraper'].name}`;
+    const adminToolsBranch = `ADMIN_TOOLS_BRANCH=${repos['adminTools'].name}`;
+    const submittalsBranch = `SUBMITTALS_BRANCH=${repos['submittals'].name}`;
 
-    const fileData = githubToken + '\r\n' + syncBranch + '\r\n' + queueBranch + '\r\n' + scraperBranch;
+    const fileData = githubToken + '\r\n' + syncBranch + '\r\n' + queueBranch + '\r\n' + scraperBranch + '\r\n' + adminToolsBranch + '\r\n' + submittalsBranch;
     const fsPromise = this.electronService.fs.promises;
 
     try {
@@ -60,28 +62,94 @@ export class DockerService {
       console.log(err);
       alert(err);
     }
-    //run docker-compose up
-    const dockerProcess = this.electronService.childProcess.spawn('Powershell.exe', ['docker-compose up']);
-    console.log('yoo');
-
-    dockerProcess.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
-    });
-
-    dockerProcess.stderr.on('data', (data) => {
-      console.warn(`stderr: ${data}`);
-    });
-    // add function to run docker-compose-down
   }
 
-  public stopAllApplications(){
+  public async buildImages(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      //run docker-compose up
+      const dockerProcess = this.electronService.childProcess.spawn('docker-compose', ['build']);
+
+      dockerProcess.stdout.on('data', (data) => {
+        this.containerOutput.next(data);
+        console.log(`stdout: ${data}`);
+      });
+
+      dockerProcess.stderr.on('data', (data) => {
+        let error = this.checkForErrors(data);
+        if (error) {
+          console.log(error);
+          reject(error);
+        }
+        this.containerOutput.next(data);
+        console.warn(`stderr: ${data}`);
+      });
+
+      dockerProcess.on('close', (code) => {
+        this.containerOutput.next(`child process exited with code ${code}`);
+        console.log(`child process exited with code ${code}`);
+        resolve();
+      });
+
+      dockerProcess.on('error', function (err) {
+        reject(err);
+      });
+    });
+  }
+
+  public async runDockerCompose(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      //run docker-compose up
+      const dockerProcess = this.electronService.childProcess.spawn('docker-compose', ['up', '--force-recreate']);
+
+      dockerProcess.stdout.on('data', (data) => {
+        this.containerOutput.next(data);
+        console.log(`stdout: ${data}`);
+      });
+
+      dockerProcess.stderr.on('data', (data) => {
+        this.containerOutput.next(data);
+        console.warn(`stderr: ${data}`);
+      });
+
+      dockerProcess.on('close', (code) => {
+        this.containerOutput.next(`child process exited with code ${code}`);
+        console.log(`child process exited with code ${code}`);
+        if (code !== 0) {
+          reject('Error occurred while running docker compose');
+        }
+        resolve();
+      });
+
+      dockerProcess.on('error', function (err) {
+        reject(err);
+      });
+    });
+  }
+
+  private checkForErrors(data: string) {
+    const dockerFileError = 'Cannot locate specified Dockerfile';
+    const dockerDaemonError = "Couldn't connect to Docker daemon";
+    let error = '';
+    if (data.includes(dockerFileError)) {
+      error = 'One of the selected branch does not include a docker file.';
+      return error;
+    }
+    if (data.includes(dockerDaemonError)) {
+      error = 'Please start docker!';
+      return error;
+    }
+  }
+
+  public stopAllApplications() {
     const dockerProcess = this.electronService.childProcess.spawn('Powershell.exe', ['docker-compose down']);
 
     dockerProcess.stdout.on('data', (data) => {
+      this.containerOutput.next(data);
       console.log(`stdout: ${data}`);
     });
 
     dockerProcess.stderr.on('data', (data) => {
+      this.containerOutput.next(data);
       console.warn(`stderr: ${data}`);
     });
   }
@@ -146,16 +214,6 @@ export class DockerService {
         console.log('-----------Remove Images Done--------------');
         resolve();
       });
-    });
-  }
-
-  private async buildImages(repos) {
-    return new Promise(async (resolve, reject) => {
-      const elements = Object.keys(repos);
-      for (const element of elements) {
-        await this.buildSyncImage(repos[element]);
-      }
-      resolve();
     });
   }
 
